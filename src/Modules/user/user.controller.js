@@ -21,6 +21,8 @@ try {
 }
 }
 
+
+
 export const logIn = async (req,res,next)=>{
     try{
     const{email,password} = req.body;
@@ -34,7 +36,7 @@ export const logIn = async (req,res,next)=>{
     
     if(newPass){
         //token
-        const userToken = jwt.sign({email,id:isExist._id},'Elb')
+        const userToken = jwt.sign({email,id:isExist._id},process.env.SECRET_KEY,{expiresIn:60});
         return res.json({message:"login successfully", userToken})
     }
     return res.json({message:"wrong password"});
@@ -46,13 +48,14 @@ export const logIn = async (req,res,next)=>{
 }
 
 
-//verfiy token 
+
+
+//verfiy token
 export const verifyToken = async (req,res,next)=>{
     try {
         const {token} = req.body;
-    const decoded_token = jwt.verify(token,'Elb');
+    const decoded_token = jwt.verify(token, process.env.SECRET_KEY);
     console.log(decoded_token);
-    
     if(!decoded_token){
         return res.json({message:"wrong"});
     }
@@ -64,14 +67,20 @@ export const verifyToken = async (req,res,next)=>{
 
 
 
+
+
 export const updateUser = async (req,res,next) =>{
     try{
-    const {userName, email} = req.query;
-    const user = await userModel.findOneAndUpdate({email},{userName});
-    if(user)
+
+    const {token,userName} = req.query;
+    const decoded_token = jwt.verify(token,process.env.SECRET_KEY);
+    const user = await userModel.findOneAndUpdate({email:decoded_token.email},{userName});
+    if(!user)
+            return res.json({message:"User doens't exist",user});
+        if(user._id.toString()=== decoded_token.id)
         return res.json({message:"upadted suceefully",user});
   
-    return res.json({message:"User doens't exist",user});
+
 }catch(error){
     res.json({message:"error",error});
 }
@@ -89,9 +98,14 @@ export const deleteuser = async (req,res,next) =>{
 }
 export const getUser = async (req,res,next) =>{
     try{
-        const {email} = req.query;
-    const user = await userModel.findOne({email});
-        return res.json({message:"exists!", user});
+        const {token} = req.query;
+        const decoded_token = jwt.verify(token,process.env.SECRET_KEY);
+
+    const user = await userModel.findById({_id:decoded_token.id});
+    if(!user)
+            return res.json({message:"User doens't exist",user});
+
+        return res.json({message:"exists!",user});
     }catch(error){
                 return res.json({message:"\failed to get", error});
     }
