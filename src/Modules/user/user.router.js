@@ -14,6 +14,8 @@ userRouter.patch('/update',user.updateUser);
 userRouter.delete('/delete',user.deleteuser);
 
 
+userRouter.post('/gettoken',user.verifyToken)
+
 
 
 export default userRouter;

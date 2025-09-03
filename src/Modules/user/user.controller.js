@@ -1,8 +1,6 @@
 import { userModel } from "../../../DB/models/user.model.js";
 import bcrypt from 'bcrypt';
-
-
-
+import  jwt  from "jsonwebtoken";
 
 
 export const signUp = async(req,res,next)=>{
@@ -15,7 +13,7 @@ try {
         return res.json({message:"user already exists!", isUserExist})
     }
     //hashing password 
-    const hashPassword = bcrypt.hashSync(password,10);
+    const hashPassword = bcrypt.hashSync(password,+process.env.SALT_ROUNDS);
     const addUser = await userModel.create({userName, email, password:hashPassword, gender});
     res.json({message:"user added succesfully!",addUser})
 } catch (error) {
@@ -29,9 +27,15 @@ export const logIn = async (req,res,next)=>{
     const isExist = await userModel.findOne({email});
 
     if(isExist){
+        console.log("here");
+        
     const newPass = bcrypt.compareSync(password,isExist.password);
+    console.log(newPass);
+    
     if(newPass){
-        return res.json({message:"login successfully", isExist})
+        //token
+        const userToken = jwt.sign({email,id:isExist._id},'Elb')
+        return res.json({message:"login successfully", userToken})
     }
     return res.json({message:"wrong password"});
     }
@@ -40,6 +44,25 @@ export const logIn = async (req,res,next)=>{
         res.json({message:"failed to login",error})
     }
 }
+
+
+//verfiy token 
+export const verifyToken = async (req,res,next)=>{
+    try {
+        const {token} = req.body;
+    const decoded_token = jwt.verify(token,'Elb');
+    console.log(decoded_token);
+    
+    if(!decoded_token){
+        return res.json({message:"wrong"});
+    }
+    return res.json({message:"valid",decoded_token});
+    } catch (error) {
+        res.json({mesage:"no",error})
+    }
+}
+
+
 
 export const updateUser = async (req,res,next) =>{
     try{
