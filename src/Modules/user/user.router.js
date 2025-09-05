@@ -12,6 +12,7 @@ const userRouter = Router();
 
 
 userRouter.post('/signup',user.signUp);
+userRouter.get('/confirmemail/:token',user.confirmEmail);
 userRouter.post('/login',user.logIn);
 userRouter.get('/get',isAuth(),user.getUser);
 userRouter.patch('/update',isAuth(),user.updateUser);

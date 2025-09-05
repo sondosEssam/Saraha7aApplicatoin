@@ -2,24 +2,67 @@ import { userModel } from "../../../DB/models/user.model.js";
 import bcrypt from 'bcrypt';
 import  jwt  from "jsonwebtoken";
 
+import { sendEmailService } from "../../Services/sendEmail.js";
 
 export const signUp = async(req,res,next)=>{
 try {
     const {userName, email, password, gender} = req.body;
     
     const isUserExist = await userModel.findOne({email});
+    // console.log(isUserExist);
     
     if(isUserExist){
         return res.json({message:"user already exists!", isUserExist})
     }
-    //hashing password 
-    const hashPassword = bcrypt.hashSync(password,+process.env.SALT_ROUNDS);
+    //sending email to user
+    //     await sendEmailService({
+    //     to:email,
+    //     subject:"signing up successfully!",
+    //     message:"signed up"
+    // })
+
+
+    //confirm 
+    const token = jwt.sign({email}, process.env.SECRET_KEY, {expiresIn: '1h'});
+    const confirmEmail = `http://localhost:10000/user/confirmemail/${token}`;
+    const message = `<a href=${confirmEmail}>Verfiy it's me</a>`
+
+    await sendEmailService({
+        to:email,
+        subject:"Confirm sign up",
+        message: message
+    })
+    //hashing password
+    const hashPassword = bcrypt.hashSync(password,+process.env.SECRET_KEY);
     const addUser = await userModel.create({userName, email, password:hashPassword, gender});
+
     res.json({message:"user added succesfully!",addUser})
 } catch (error) {
     res.json({message:"can't add user",error})
 }
 }
+
+export const confirmEmail = async (req,res,next)=>{
+    try {
+    const {token} = req.params;
+    const decoded_token = jwt.verify(token,process.env.SECRET_KEY);
+
+        const isExist = await userModel.findOne({email:decoded_token.email});
+        if(isExist.isConfirmed)
+            return res.json({message:"already confimere"})
+        
+        const user = await userModel.findOneAndUpdate({email:decoded_token.email},{isConfirmed:true},{new:true})
+    res.json ({message:"user confirmed successfully "});
+    } catch (error) {
+        res.json({message:"failed to confirm, register again", error})
+    }
+}
+
+
+
+
+
+
 
 
 

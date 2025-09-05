@@ -22,6 +22,10 @@ const userSchema =  new Schema({
         enum:['male','female','not spesificed'],
         default:'not spesificed'
     },
+    isConfirmed:{
+        type:Boolean,
+        default:false
+    },
     profile_img:String,
 });
 
