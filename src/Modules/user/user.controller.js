@@ -36,7 +36,7 @@ export const logIn = async (req,res,next)=>{
     
     if(newPass){
         //token
-        const userToken = jwt.sign({email,id:isExist._id},process.env.SECRET_KEY,{expiresIn:60});
+        const userToken = jwt.sign({email,id:isExist._id},process.env.SECRET_KEY,{expiresIn:'1h'});
         return res.json({message:"login successfully", userToken})
     }
     return res.json({message:"wrong password"});
@@ -72,12 +72,10 @@ export const verifyToken = async (req,res,next)=>{
 export const updateUser = async (req,res,next) =>{
     try{
 
-    const {token,userName} = req.query;
-    const decoded_token = jwt.verify(token,process.env.SECRET_KEY);
-    const user = await userModel.findOneAndUpdate({email:decoded_token.email},{userName});
+    const {userName} = req.query;
+    const user = await userModel.findOneAndUpdate({_id:req.authuser._id},{userName});
     if(!user)
             return res.json({message:"User doens't exist",user});
-        if(user._id.toString()=== decoded_token.id)
         return res.json({message:"upadted suceefully",user});
   
 
@@ -88,8 +86,8 @@ export const updateUser = async (req,res,next) =>{
 
 export const deleteuser = async (req,res,next) =>{
     try{
-        const {email} = req.query;
-    const user = await userModel.findOneAndDelete({email});
+
+    const user = await userModel.findOneAndDelete({_id:req.authuser._id});
         return res.json({message:"deleted successfully", user});
     }catch(error){
                 return res.json({message:"\failed to delete", error});
@@ -98,10 +96,8 @@ export const deleteuser = async (req,res,next) =>{
 }
 export const getUser = async (req,res,next) =>{
     try{
-        const {token} = req.query;
-        const decoded_token = jwt.verify(token,process.env.SECRET_KEY);
 
-    const user = await userModel.findById({_id:decoded_token.id});
+    const user = await userModel.findById({_id:req.authuser._id});
     if(!user)
             return res.json({message:"User doens't exist",user});
 
