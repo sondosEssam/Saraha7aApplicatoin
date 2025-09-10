@@ -26,7 +26,15 @@ const userSchema =  new Schema({
         type:Boolean,
         default:false
     },
-    profile_img:String,
+    profile_img:{
+        data:Buffer,
+        contentType:String,
+    },
+    Gallary_img:{
+        data:[Buffer],
+        contentType:[String],
+        default:[]
+    }
 });
 
 export const userModel = mongoose.model('user',userSchema);

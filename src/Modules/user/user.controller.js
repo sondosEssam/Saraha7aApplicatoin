@@ -1,6 +1,7 @@
 import { userModel } from "../../../DB/models/user.model.js";
 import bcrypt from 'bcrypt';
 import  jwt  from "jsonwebtoken";
+import fs from 'fs'
 
 import { sendEmailService } from "../../Services/sendEmail.js";
 
@@ -59,13 +60,6 @@ export const confirmEmail = async (req,res,next)=>{
 }
 
 
-
-
-
-
-
-
-
 export const logIn = async (req,res,next)=>{
     try{
     const{email,password} = req.body;
@@ -79,7 +73,7 @@ export const logIn = async (req,res,next)=>{
     
     if(newPass){
         //token
-        const userToken = jwt.sign({email,id:isExist._id},process.env.SECRET_KEY,{expiresIn:'1h'});
+        const userToken = jwt.sign({email,id:isExist._id},process.env.SECRET_KEY,/*{expiresIn:'1h'}*/);
         return res.json({message:"login successfully", userToken})
     }
     return res.json({message:"wrong password"});
@@ -89,9 +83,6 @@ export const logIn = async (req,res,next)=>{
         res.json({message:"failed to login",error})
     }
 }
-
-
-
 
 //verfiy token
 export const verifyToken = async (req,res,next)=>{
@@ -109,9 +100,59 @@ export const verifyToken = async (req,res,next)=>{
 }
 
 
+//upload files
+export const profileImage = async (req,res,next)=>{
+    try {
+        // console.log(req.file);
+        // console.log(req.file.path);
+        
+        const imgInfo = {
+        data: fs.readFileSync(req.file.path),
+        contentType:req.file.mimetype
+    }
+    const user = await userModel.findOneAndUpdate({_id:req.authuser._id},{profile_img:imgInfo});
+        if(!user)
+            return res.json({message:"User doens't exist",user});
+     return res.json({message:"done, upadted suceefully", /*file:req.file ,*/ user:user });
+    } catch (error) {
+        res.json({message:"some error happened here ", error})
+    }
 
+}
+export const getProfileImage = async (req,res,next) =>{
+    try{
+            const user = await userModel.findById({_id:req.authuser._id});
+            if(!user)
+            return res.json({message:"User doens't exist",user});
+        res.set("Content-Type",user.profile_img.contentType);
+        res.send(user.profile_img.data);
+    //  return res.json({message:"done, upadted suceefully", /*file:req.file ,*/ user:user });
+    } catch (error) {
+        res.json({message:"some error happened here ", error})
+    }
+}
 
+export const addGallary = async (req,res,next)=>{
+    try {
+        const imgs = req.files;
+        const imgsInfo = [];
+        for(let img of imgs){
+        let imgInfo = {
+        data: fs.readFileSync(img.path),
+        contentType:img.mimetype
+    }
+    imgsInfo.push(imgInfo)
+        }
+    const user = await userModel.findOneAndUpdate({_id:req.authuser._id},{Gallary_img:imgsInfo});
+        if(!user)
+            return res.json({message:"User doens't exist",user});
+     return res.json({message:"done, upadted suceefully", /*file:req.file ,*/ user:user });
+    } catch (error) {
+        res.json({message:"some error happened here ", error})
+    }
+}
 
+///crud
 export const updateUser = async (req,res,next) =>{
     try{
 
@@ -143,8 +184,18 @@ export const getUser = async (req,res,next) =>{
     const user = await userModel.findById({_id:req.authuser._id});
     if(!user)
             return res.json({message:"User doens't exist",user});
+    const img64Bit = user.profile_img.data.toString('base64');
 
-        return res.json({message:"exists!",user});
+        return res.json({message:"exists!",userInfo:{
+            userName:user.userName,
+            email:user.email,
+            password:user.password,
+            gender:user.gender,
+            profileImgage:{
+                src:img64Bit,
+                type:user.profile_img.contentType
+            }
+        }});
     }catch(error){
                 return res.json({message:"\failed to get", error});
     }

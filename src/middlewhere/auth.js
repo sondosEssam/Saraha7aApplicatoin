@@ -17,7 +17,3 @@ export  const isAuth =()=>{
         next();
     }
 }
-/**
- * add a property to the req under the name auth
- * 
- */

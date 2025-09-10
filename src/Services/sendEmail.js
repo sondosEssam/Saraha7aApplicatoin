@@ -16,19 +16,14 @@ export async function sendEmailService({to,subject,message,attachment=[]} = {}) 
         // }
     }
 )
-// console.log(transporter);
 
-
-    //email
 
     const emailInfo =  transporter.sendMail({
         from:'sondosessam713@gmail.com',
         to:to?to:'',
         subject:subject?subject:'subject',
         html:message?message:'<h1>no meeesgaes sent </h1>',
-        // text:'text sent successfylly',
         attachments:attachment
     })
 
-// console.log(emailInfo)
 }
